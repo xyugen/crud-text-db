@@ -37,6 +37,8 @@ void read()
     FILE *fp;
     Student r;
 
+    int oid = NULL; // old id
+
     fp = fopen("records.txt", "r");
     if (fp == NULL) {
         printf("Error opening file!\n");
@@ -45,7 +47,13 @@ void read()
 
     printf("ID\tLast Name\tFirst Name\tAge\n");
     while (fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF) {
+        if (r.id == oid) // check if it's repeating
+        {
+            printf("Infinite loop error!");
+            return;
+        }
         printf(FORMAT_READ, r.id, r.lastName, r.firstName, r.age);
+        oid = r.id;
     }
 
     fclose(fp);
