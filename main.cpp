@@ -13,10 +13,41 @@ typedef struct
     int age;
 } Student;
 
+
+bool checkId(int id)
+{
+    FILE *fp;
+
+    Student record;
+
+    fp = fopen("records.txt", "r");
+    if (fp == NULL) {
+        printf("Error opening file!\n");
+        return false;
+    }
+
+    while (fscanf(fp, FORMAT_IN, &record.id, record.lastName, record.firstName, &record.age) != EOF) {
+        if (record.id == id) {
+            fclose(fp);
+            return true;
+        }
+    }
+
+    fclose(fp);
+    return false;
+}
+
 // CRUD FUNCTIONS
 void create(Student record)
 {
     FILE *fp;
+
+    // Check if id already exists
+    bool idExists = checkId(record.id);
+    if (idExists) {
+        printf("Error: ID already exists.\n");
+        return;
+    }
 
     fp = fopen("records.txt", "a");
     if (fp == NULL) {
