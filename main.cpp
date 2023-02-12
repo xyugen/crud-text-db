@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const char* FORMAT_IN = "%d, %[^,], %[^,], %d";
+const char* FORMAT_IN = "%d, %[^,], %[^,], %d\n";
 const char* FORMAT_OUT = "%d, %s, %s, %d\n";
 const char* FORMAT_READ = "%d\t%s\t\t%s\t\t%d\n";
 
@@ -90,7 +90,43 @@ void read()
     fclose(fp);
 }
 
-void update() {}
+void update(int id, Student nr) {
+    FILE* fp;
+    Student r;
+
+    fp = fopen("records.txt", "r");
+    if (fp == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    FILE* temp;
+    temp = fopen("temp_records.txt", "w");
+    if (temp == NULL) {
+        printf("Error creating temporary file!\n");
+        return;
+    }
+
+    while(fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF)
+    {
+        if (r.id == id)
+        {
+            fprintf(temp, FORMAT_OUT, r.id, nr.lastName, nr.firstName, nr.age);
+        }
+        else
+        {
+            fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+
+    remove("records.txt");
+    rename("temp_records.txt", "records.txt");
+
+    printf("Record successfully edited.\n");
+}
 
 void deleteF() {}
 
@@ -128,6 +164,7 @@ void about()
 int main()
 {
     int c;
+    Student student1;
     do
     {
         // MAIN MENU
@@ -148,8 +185,6 @@ int main()
         switch (c)
         {
             case 1:
-                Student student1;
-
                 printf("Type in the Student id: ");
                 scanf("%d", &student1.id);
                 getchar();
@@ -171,7 +206,24 @@ int main()
                 read();
                 break;
             case 3:
-                update();
+                Student newStudent;
+                int id;
+                printf("Enter student id: ");
+                scanf("%d", &id);
+                getchar();
+
+                printf("Type in the student's new last name: ");
+                fgets(newStudent.lastName, 25, stdin);
+                rmNewline(newStudent.lastName);
+
+                printf("Type in the student's new first name: ");
+                fgets(newStudent.firstName, 25, stdin);
+                rmNewline(newStudent.firstName);
+
+                printf("Type in the student's new age: ");
+                scanf("%d", &newStudent.age);
+
+                update(id, newStudent);
                 break;
             case 4:
                 deleteF();
