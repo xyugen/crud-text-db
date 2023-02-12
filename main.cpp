@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <conio.h>
 
 const char* FORMAT_IN = "%d, %[^,], %[^,], %d\n";
 const char* FORMAT_OUT = "%d, %s, %s, %d\n";
@@ -128,7 +129,57 @@ void update(int id, Student nr) {
     printf("Record successfully edited.\n");
 }
 
-void deleteF() {}
+void deleteF(int id) {
+    FILE* fp;
+    Student r;
+    char c;
+
+    fp = fopen("records.txt", "r");
+    if (fp == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    FILE* temp;
+    temp = fopen("temp_records.txt", "w");
+    if (temp == NULL) {
+        printf("Error creating temporary file!\n");
+        return;
+    }
+
+    while(fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF)
+    {
+        if (r.id != id)
+        {
+            fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
+        }
+        else
+        {
+            printf("ID: %d\tName: %s, %s\t Age: %d\nAre your sure you want to delete this student? [N/y]", r.id, r.lastName, r.firstName, r.age);
+            scanf(" %c", &c);
+
+            if ((c != 'y') && (c != 'Y'))
+            {
+                fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
+                printf("Cancelling...\n");
+
+                fclose(fp);
+                fclose(temp);
+                remove("temp_records.txt");
+
+                return;
+            }
+        }
+    }
+
+    fclose(fp);
+    fclose(temp);
+
+    remove("records.txt");
+    rename("temp_records.txt", "records.txt");
+
+    printf("Record successfully deleted!\n");
+}
 
 // Additional
 void rmNewline(char* input)
@@ -163,7 +214,7 @@ void about()
 
 int main()
 {
-    int c;
+    int c, id;
     Student student1;
     do
     {
@@ -207,7 +258,7 @@ int main()
                 break;
             case 3:
                 Student newStudent;
-                int id;
+
                 printf("Enter student id: ");
                 scanf("%d", &id);
                 getchar();
@@ -226,7 +277,10 @@ int main()
                 update(id, newStudent);
                 break;
             case 4:
-                deleteF();
+                printf("Enter ID of student to delete: ");
+                scanf("%d", &id);
+
+                deleteF(id);
                 break;
             case 5:
                 about();
