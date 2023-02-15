@@ -1,34 +1,32 @@
-#include <stdio.h>
-#include <string.h>
-#include <conio.h>
+#include <cstdio>
+#include <cstring>
 
-const char* FORMAT_IN = "%d, %[^,], %[^,], %d\n";
-const char* FORMAT_OUT = "%d, %s, %s, %d\n";
-const char* FORMAT_READ = "%d\t%s\t\t%s\t\t%d\n";
-
-// RECORD STRUCTURE
 typedef struct
 {
     int id;
-    char lastName[25], firstName[25];
-    int age;
+    char name[25], section[25];
+    float grade;
 } Student;
 
-
-bool checkId(int id)
+FILE* openFile(const char* fileName, const char* mode)
 {
-    FILE *fp;
-
-    Student record;
-
-    fp = fopen("records.txt", "r");
+    FILE* fp = fopen(fileName, mode);
     if (fp == NULL) {
-        printf("Error opening file!\n");
+        printf("Failed to open file %s!\n", fileName);
+    }
+    return fp;
+}
+
+bool checkID(int id)
+{
+    FILE* fp = openFile("records.txt", "r");
+    if (fp == NULL) {
         return false;
     }
 
-    while (fscanf(fp, FORMAT_IN, &record.id, record.lastName, record.firstName, &record.age) != EOF) {
-        if (record.id == id) {
+    Student r;
+    while(fread(&r, sizeof(r), 1, fp)) {
+        if (r.id == id) {
             fclose(fp);
             return true;
         }
@@ -38,137 +36,110 @@ bool checkId(int id)
     return false;
 }
 
-// CRUD FUNCTIONS
-void create(Student record)
+void create(Student r)
 {
-    FILE *fp;
-
-    // Check if id already exists
-    bool idExists = checkId(record.id);
-    if (idExists) {
-        printf("Error: ID already exists.\n");
+    if (checkID(r.id)) {
+        printf("ID already exists!\n");
         return;
     }
 
-    fp = fopen("records.txt", "a");
+    FILE* fp = openFile("records.txt", "a");
     if (fp == NULL) {
-        printf("Error opening file!\n");
         return;
-    } else {
-        printf("Record stored successfully.\n");
     }
 
-    fprintf(fp, FORMAT_OUT, record.id, record.lastName, record.firstName, record.age);
-    fseek(fp, 0, SEEK_SET);
+    fwrite(&r, sizeof(r), 1, fp);
+    printf("Record successfully created!\n");
 
     fclose(fp);
 }
 
 void read()
 {
-    FILE *fp;
-    Student r;
-
-    int oid = NULL; // old id
-
-    fp = fopen("records.txt", "r");
+    FILE* fp = openFile("records.txt", "r");
     if (fp == NULL) {
-        printf("Error opening file!\n");
         return;
     }
 
-    printf("ID\tLast Name\tFirst Name\tAge\n");
-    while (fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF) {
-        if (r.id == oid) // check if it's repeating
-        {
-            printf("Infinite loop error!");
-            return;
-        }
-        printf(FORMAT_READ, r.id, r.lastName, r.firstName, r.age);
-        oid = r.id;
+    Student r;
+    printf("ID\t\tName\t\tSection\t\tGrade\n");
+    while (fread(&r, sizeof(r), 1, fp)) {
+        printf("%d\t%s\t\t%s\t\t%.2f\n", r.id, r.name, r.section, r.grade);
     }
+    printf("End of file.\n");
 
     fclose(fp);
 }
 
-void update(int id, Student nr) {
-    FILE* fp;
-    Student r;
-
-    fp = fopen("records.txt", "r");
+void update(Student nR)
+{
+    FILE* fp = openFile("records.txt", "r");
     if (fp == NULL) {
-        printf("Error opening file!\n");
         return;
     }
 
-    FILE* temp;
-    temp = fopen("temp_records.txt", "w");
+    FILE* temp = openFile("records.temp.txt", "w");
     if (temp == NULL) {
-        printf("Error creating temporary file!\n");
         return;
     }
 
-    while(fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF)
-    {
-        if (r.id == id)
-        {
-            fprintf(temp, FORMAT_OUT, r.id, nr.lastName, nr.firstName, nr.age);
-        }
-        else
-        {
-            fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
+    Student r;
+    if (!checkID(nR.id)) {
+        printf("Student does not exist!\n");
+        return;
+    }
+
+    while (fread(&r, sizeof(r), 1, fp)) {
+        if (r.id == nR.id) {
+            fwrite(&nR, sizeof(nR), 1, temp);
+        } else {
+            fwrite(&r, sizeof(r), 1, temp);
         }
     }
+
+    printf("Record successfully updated!\n");
 
     fclose(fp);
     fclose(temp);
 
     remove("records.txt");
-    rename("temp_records.txt", "records.txt");
-
-    printf("Record successfully edited.\n");
+    rename("records.temp.txt", "records.txt");
 }
 
-void deleteF(int id) {
-    FILE* fp;
+void deleteF(int id)
+{
+    FILE* fp = openFile("records.txt", "r");
+    if (fp == NULL) {
+        return;
+    }
+
+    FILE* temp = openFile("records.temp.txt", "w");
+    if (temp == NULL) {
+        return;
+    }
+
     Student r;
+    if (!checkID(id)) {
+        printf("Student does not exist!\n");
+        return;
+    }
+
     char c;
+    while (fread(&r, sizeof(r), 1, fp)) {
+        if (r.id == id) {
+            printf("Are you sure you want to delete student %s?\n"
+                   "[1] Yes\n"
+                   "[0] No\n", r.name);
+            scanf_s(" %c", &c);
 
-    fp = fopen("records.txt", "r");
-    if (fp == NULL) {
-        printf("Error opening file!\n");
-        return;
-    }
-
-    FILE* temp;
-    temp = fopen("temp_records.txt", "w");
-    if (temp == NULL) {
-        printf("Error creating temporary file!\n");
-        return;
-    }
-
-    while(fscanf(fp, FORMAT_IN, &r.id, r.lastName, r.firstName, &r.age) != EOF)
-    {
-        if (r.id != id)
-        {
-            fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
-        }
-        else
-        {
-            printf("ID: %d\tName: %s, %s\t Age: %d\nAre your sure you want to delete this student? [N/y]", r.id, r.lastName, r.firstName, r.age);
-            scanf(" %c", &c);
-
-            if ((c != 'y') && (c != 'Y'))
-            {
-                fprintf(temp, FORMAT_OUT, r.id, r.lastName, r.firstName, r.age);
-                printf("Cancelling...\n");
-
-                fclose(fp);
-                fclose(temp);
-                remove("temp_records.txt");
-
-                return;
+            if (c == '1') {
+                printf("Student successfully deleted!\n");
+            } else {
+                printf("Student not deleted!\n");
+                fwrite(&r, sizeof(r), 1, temp);
             }
+        } else {
+            fwrite(&r, sizeof(r), 1, temp);
         }
     }
 
@@ -176,123 +147,86 @@ void deleteF(int id) {
     fclose(temp);
 
     remove("records.txt");
-    rename("temp_records.txt", "records.txt");
-
-    printf("Record successfully deleted!\n");
+    rename("records.temp.txt", "records.txt");
 }
 
-// Additional
 void rmNewline(char* input)
 {
-    int length = strlen(input);
-    if (input[length - 1] == '\n')
-    {
-        input[length - 1] = '\0';
+    int len = strlen(input);
+    if (input[len - 1] == '\n') {
+        input[len - 1] = '\0';
     }
 }
-
-void about()
-{
-    printf("\n\n-----------------------------------------"
-           "\n|\t\tAbout\t\t\t|"
-           "\n-----------------------------------------"
-           "\n| A program created by Alex Arias for\t|"
-           "\n| their Computer Programming 2 subject.\t|"
-           "\n-----------------------------------------");
-}
-
-// BETA
-/* void menu(char title[12], char text[99])
-{
-    printf("\n\n-----------------------------------------"
-           "\n|\t\t%s\t\t"
-           "\"\\n\\n-----------------------------------------\""
-           "|\t")
-} */
-
-// MAIN FUNCTION
 
 int main()
 {
-    int c, id;
-    Student student1;
-    do
-    {
-        // MAIN MENU
-        printf("\n\n-----------------------------------------"
-               "\n|\t\tMain Menu\t\t|");
-        printf("\n-----------------------------------------"
-               "\n|\t1. CREATE\t\t\t|"
-               "\n|\t2. READ\t\t\t\t|"
-               "\n|\t3. UPDATE\t\t\t|"
-               "\n|\t4. DELETE\t\t\t|"
-               "\n|\t5. ABOUT\t\t\t|"
-               "\n|\t0. EXIT\t\t\t\t|"
-               "\n-----------------------------------------");
+    int c;
+    Student record;
 
-        printf("\nENTER YOUR CHOICE: ");
-        scanf("%d", &c);
+    do {
+        printf("\n\n------------------------------------\n"
+               "\t\tMenu\n"
+               "------------------------------------\n"
+               "[1] CREATE\n"
+               "[2] READ\n"
+               "[3] UPDATE\n"
+               "[4] DELETE\n"
+               "[0] EXIT\n");
+        printf("What is your choice: ");
+        scanf_s("%d", &c);
 
-        switch (c)
-        {
+        switch (c) {
             case 1:
-                printf("Type in the Student id: ");
-                scanf("%d", &student1.id);
+                printf("Student ID: ");
+                scanf_s("%d", &record.id);
                 getchar();
 
-                printf("Type in the student's last name: ");
-                fgets(student1.lastName, 25, stdin);
-                rmNewline(student1.lastName);
+                printf("Student name: ");
+                fgets(record.name, 25, stdin);
+                rmNewline(record.name);
 
-                printf("Type in the student's  first name: ");
-                fgets(student1.firstName, 25, stdin);
-                rmNewline(student1.firstName);
+                printf("Student section: ");
+                fgets(record.section, 25, stdin);
+                rmNewline(record.section);
 
-                printf("Type in the student's age: ");
-                scanf("%d", &student1.age);
+                printf("Student grade: ");
+                scanf_s("%f", &record.grade);
 
-                create(student1);
+                create(record);
                 break;
             case 2:
                 read();
                 break;
             case 3:
-                Student newStudent;
-
-                printf("Enter student id: ");
-                scanf("%d", &id);
+                printf("Student ID: ");
+                scanf_s("%d", &record.id);
                 getchar();
 
-                printf("Type in the student's new last name: ");
-                fgets(newStudent.lastName, 25, stdin);
-                rmNewline(newStudent.lastName);
+                printf("New student name: ");
+                fgets(record.name, 25, stdin);
+                rmNewline(record.name);
 
-                printf("Type in the student's new first name: ");
-                fgets(newStudent.firstName, 25, stdin);
-                rmNewline(newStudent.firstName);
+                printf("New student section: ");
+                fgets(record.section, 25, stdin);
+                rmNewline(record.section);
 
-                printf("Type in the student's new age: ");
-                scanf("%d", &newStudent.age);
+                printf("New student grade: ");
+                scanf_s("%f", &record.grade);
 
-                update(id, newStudent);
+                update(record);
                 break;
             case 4:
-                printf("Enter ID of student to delete: ");
-                scanf("%d", &id);
+                printf("Student ID: ");
+                scanf_s("%d", &record.id);
 
-                deleteF(id);
-                break;
-            case 5:
-                about();
+                deleteF(record.id);
                 break;
             case 0:
-                printf("Exiting...");
+                printf("Exiting...\n");
                 break;
             default:
-                printf("Invalid input.");
+                printf("Invalid input!\n");
                 break;
         }
-    } while (c != 0);
-
-    return 0;
+    } while(c != 0);
 }

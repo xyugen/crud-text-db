@@ -1,2 +1,0 @@
-1, Arias, Jorym, 18
-3, Arias, Jiam, 20
