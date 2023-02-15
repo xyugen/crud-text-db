@@ -130,7 +130,7 @@ void deleteF(int id)
             printf("Are you sure you want to delete student %s?\n"
                    "[1] Yes\n"
                    "[0] No\n", r.name);
-            scanf_s(" %c", &c);
+            scanf(" %c", &c);
 
             if (c == '1') {
                 printf("Student successfully deleted!\n");
@@ -173,12 +173,12 @@ int main()
                "[4] DELETE\n"
                "[0] EXIT\n");
         printf("What is your choice: ");
-        scanf_s("%d", &c);
+        scanf("%d", &c);
 
         switch (c) {
             case 1:
                 printf("Student ID: ");
-                scanf_s("%d", &record.id);
+                scanf("%d", &record.id);
                 getchar();
 
                 printf("Student name: ");
@@ -190,7 +190,7 @@ int main()
                 rmNewline(record.section);
 
                 printf("Student grade: ");
-                scanf_s("%f", &record.grade);
+                scanf("%f", &record.grade);
 
                 create(record);
                 break;
@@ -199,7 +199,7 @@ int main()
                 break;
             case 3:
                 printf("Student ID: ");
-                scanf_s("%d", &record.id);
+                scanf("%d", &record.id);
                 getchar();
 
                 printf("New student name: ");
@@ -211,13 +211,13 @@ int main()
                 rmNewline(record.section);
 
                 printf("New student grade: ");
-                scanf_s("%f", &record.grade);
+                scanf("%f", &record.grade);
 
                 update(record);
                 break;
             case 4:
                 printf("Student ID: ");
-                scanf_s("%d", &record.id);
+                scanf("%d", &record.id);
 
                 deleteF(record.id);
                 break;
